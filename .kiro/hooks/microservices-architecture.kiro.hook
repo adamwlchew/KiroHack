@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "Microservices Architecture Check",
+  "description": "Ensures changes to microservices maintain proper separation of concerns and API contracts",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/services/**",
+      "**/api/**",
+      "**/*service*/**",
+      "**/docker-compose*.yml",
+      "**/Dockerfile*",
+      "**/*.proto",
+      "**/serverless*.yml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "I notice you're making changes to microservices architecture. Before proceeding, please verify:\n\n1. Does this change maintain proper service boundaries and separation of concerns?\n2. Are API contracts being preserved or properly versioned if changed?\n3. Have you updated relevant documentation for any service interface changes?\n4. Will this change affect other dependent services?\n5. If this involves AWS resources, what AWS credentials are needed for this operation, and how would you like to provide them?\n\nPlease ensure these architectural considerations are addressed before implementing the changes."
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "pageflow-monorepo",
+  "version": "1.0.0",
+  "description": "PageFlow AI Learning Platform - Monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "build:packages": "npm run build --workspaces=packages/*",
+    "build:services": "npm run build --workspaces=services/*",
+    "build:web": "npm run build --workspaces=apps/web",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces",
+    "test:unit": "./scripts/test-runner.sh unit",
+    "test:integration": "./scripts/test-runner.sh integration",
+    "test:performance": "./scripts/test-runner.sh performance",
+    "test:e2e": "./scripts/test-runner.sh e2e",
+    "test:accessibility": "./scripts/test-runner.sh accessibility",
+    "test:coverage": "./scripts/test-runner.sh coverage true",
+    "test:all": "./scripts/test-runner.sh all",
+    "test:parallel": "./scripts/test-runner.sh all false true",
+    "lint": "npm run lint --workspaces",
+    "clean": "npm run clean --workspaces",
+    "install:all": "npm install && npm run install --workspaces",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:infrastructure": "cd pageflow-infrastructure && npm run build && npx cdk deploy --all",
+    "cdk": "cdk",
+    "cdk:deploy": "cdk deploy --all",
+    "cdk:synth": "cdk synth",
+    "cdk:diff": "cdk diff"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "aws-cdk": "^2.100.0",
+    "aws-cdk-lib": "^2.100.0",
+    "constructs": "^10.3.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.3",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

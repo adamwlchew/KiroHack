@@ -1,0 +1,326 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: pageflow-api-gateway-staging
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=staging
+      - PORT=3000
+      - CORS_ORIGIN=http://localhost:3000,http://staging.pageflow.ai
+      - JWT_SECRET=staging-jwt-secret-key-2024
+    env_file:
+      - staging.env
+    networks:
+      - pageflow-staging
+    depends_on:
+      - user-service
+      - progress-service
+      - assessment-service
+      - bedrock-service
+      - device-sync-service
+      - learning-path-service
+      - page-companion-service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # User Service
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: pageflow-user-service-staging
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=staging
+      - PORT=3001
+    env_file:
+      - staging.env
+    networks:
+      - pageflow-staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Progress Service
+  progress-service:
+    build:
+      context: ./services/progress-service
+      dockerfile: Dockerfile
+    container_name: pageflow-progress-service-staging
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=staging
+      - PORT=3002
+    env_file:
+      - staging.env
+    networks:
+      - pageflow-staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Assessment Service
+  assessment-service:
+    build:
+      context: ./services/assessment
+      dockerfile: Dockerfile
+    container_name: pageflow-assessment-service-staging
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=staging
+      - PORT=3003
+    env_file:
+      - staging.env
+    networks:
+      - pageflow-staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Bedrock Service
+  bedrock-service:
+    build:
+      context: ./services/bedrock
+      dockerfile: Dockerfile
+    container_name: pageflow-bedrock-service-staging
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=staging
+      - PORT=3004
+      - AWS_REGION=us-east-1
+    env_file:
+      - staging.env
+    networks:
+      - pageflow-staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Device Sync Service
+  device-sync-service:
+    build:
+      context: ./services/device-sync
+      dockerfile: Dockerfile
+    container_name: pageflow-device-sync-service-staging
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=staging
+      - PORT=3005
+    env_file:
+      - staging.env
+    networks:
+      - pageflow-staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Learning Path Service
+  learning-path-service:
+    build:
+      context: ./services/learning-path
+      dockerfile: Dockerfile
+    container_name: pageflow-learning-path-service-staging
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=staging
+      - PORT=3006
+    env_file:
+      - staging.env
+    networks:
+      - pageflow-staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Page Companion Service
+  page-companion-service:
+    build:
+      context: ./services/page-companion
+      dockerfile: Dockerfile
+    container_name: pageflow-page-companion-service-staging
+    ports:
+      - "3007:3007"
+    environment:
+      - NODE_ENV=staging
+      - PORT=3007
+    env_file:
+      - staging.env
+    networks:
+      - pageflow-staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Web Application
+  web-app:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: pageflow-web-app-staging
+    ports:
+      - "8080:3000"
+    environment:
+      - NODE_ENV=staging
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+    env_file:
+      - staging.env
+    networks:
+      - pageflow-staging
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database (for staging)
+  postgres:
+    image: postgres:15-alpine
+    container_name: pageflow-postgres-staging
+    environment:
+      - POSTGRES_DB=pageflow_staging
+      - POSTGRES_USER=pageflow_staging_user
+      - POSTGRES_PASSWORD=staging_db_password_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+      - ./database/init-staging.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - pageflow-staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pageflow_staging_user -d pageflow_staging"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: pageflow-redis-staging
+    command: redis-server --requirepass staging_redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_staging_data:/data
+    networks:
+      - pageflow-staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: pageflow-nginx-staging
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/staging.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    networks:
+      - pageflow-staging
+    depends_on:
+      - api-gateway
+      - web-app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: pageflow-prometheus-staging
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus-staging.yml:/etc/prometheus/prometheus.yml
+      - prometheus_staging_data:/prometheus
+    networks:
+      - pageflow-staging
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: pageflow-grafana-staging
+    ports:
+      - "3008:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=staging_grafana_password
+    volumes:
+      - grafana_staging_data:/var/lib/grafana
+      - ./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards
+    networks:
+      - pageflow-staging
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  postgres_staging_data:
+  redis_staging_data:
+  prometheus_staging_data:
+  grafana_staging_data:
+
+networks:
+  pageflow-staging:
+    driver: bridge 

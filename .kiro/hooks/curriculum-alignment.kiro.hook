@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Curriculum Alignment Check",
+  "description": "Monitors content-related files for proper curriculum standard alignment",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/content/**",
+      "**/curriculum/**",
+      "**/*lesson*/**",
+      "**/*course*/**",
+      "**/*.md",
+      "**/*.json"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "I notice you're modifying educational content. Since PageFlow aligns content with educational standards (Australian, UK, US, etc.), please verify:\n\n1. Is this content properly tagged with relevant curriculum standards?\n2. Does the content metadata include appropriate grade/age levels?\n3. Are learning objectives clearly defined and mapped to standards?\n4. Is the content structured to support the AI-powered learning path generation?\n\nWould you like me to help ensure proper curriculum alignment for these content changes?"
+  }
+}

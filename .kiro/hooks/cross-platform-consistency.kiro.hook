@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "name": "Cross-Platform Consistency Check",
+  "description": "Ensures consistency across web, mobile AR, and VR implementations when platform-specific code changes",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/web/**",
+      "**/mobile/**",
+      "**/ar/**",
+      "**/vr/**",
+      "**/*platform*/**"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "I notice you're making changes to platform-specific code. Since PageFlow aims for cross-platform consistency, please consider:\n\n1. Does this change need to be reflected in other platform implementations?\n2. Will this affect the user experience consistency across platforms?\n3. Are there any platform-specific considerations that need to be addressed?\n4. Have you updated shared components or services that might impact other platforms?\n\nWould you like me to help ensure cross-platform consistency for these changes?"
+  }
+}

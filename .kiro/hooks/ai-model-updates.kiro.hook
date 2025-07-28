@@ -1,0 +1,24 @@
+{
+  "enabled": true,
+  "name": "AI Model Updates Check",
+  "description": "Monitors changes to AI models and ensures proper testing and validation",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/models/**",
+      "**/*model*/**",
+      "**/*.h5",
+      "**/*.pkl",
+      "**/*.onnx",
+      "**/*.pt",
+      "**/*.pth",
+      "**/*.mlmodel",
+      "**/ml/**"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "I notice you're making changes to AI models or machine learning components. Since PageFlow relies on AI for personalized learning, please verify:\n\n1. Has this model been tested with diverse user data to ensure fairness and inclusivity?\n2. Are there performance benchmarks for this model update?\n3. Does this change affect the personalization algorithms?\n4. Have you considered the computational requirements across different platforms?\n5. If this involves AWS SageMaker or other AWS ML services, what AWS credentials are needed for this operation, and how would you like to provide them?\n\nPlease ensure proper validation of AI model changes before deployment."
+  }
+}

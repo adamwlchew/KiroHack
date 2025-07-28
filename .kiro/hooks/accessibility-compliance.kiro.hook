@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Accessibility Compliance Check",
+  "description": "Monitors UI-related files for accessibility compliance with WCAG 2.1 AA standards",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.jsx",
+      "**/*.tsx",
+      "**/*.vue",
+      "**/*.html",
+      "**/*.css",
+      "**/*.scss"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "I notice you're making changes to UI components. Since PageFlow prioritizes accessibility (WCAG 2.1 AA compliance), please verify:\n\n1. Do all interactive elements have proper keyboard navigation?\n2. Are there appropriate ARIA attributes for custom components?\n3. Is the color contrast sufficient (minimum 4.5:1 for normal text)?\n4. Are there text alternatives for non-text content?\n5. Is the content structure logical for screen readers?\n\nWould you like me to review these changes for accessibility compliance?"
+  }
+}

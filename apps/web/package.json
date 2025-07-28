@@ -1,0 +1,45 @@
+{
+  "name": "@pageflow/web",
+  "version": "1.0.0",
+  "description": "PageFlow Web Application",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:a11y": "jest --testPathPattern=accessibility"
+  },
+  "dependencies": {
+    "@aws-amplify/ui-react": "^6.0.0",
+    "@pageflow/types": "file:../../packages/types",
+    "@pageflow/utils": "file:../../packages/utils",
+    "@reduxjs/toolkit": "^1.9.0",
+    "aws-amplify": "^6.0.0",
+    "framer-motion": "^10.16.0",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-redux": "^8.1.0",
+    "styled-components": "^6.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^13.4.0",
+    "@types/jest": "^29.0.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/styled-components": "^5.1.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "jest": "^29.0.0",
+    "jest-environment-jsdom": "^30.0.5",
+    "typescript": "^5.0.0"
+  }
+}

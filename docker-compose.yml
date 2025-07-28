@@ -1,0 +1,281 @@
+version: '3.8'
+
+services:
+  # Development database
+  postgres:
+    image: postgres:15-alpine
+    container_name: pageflow-postgres
+    environment:
+      POSTGRES_DB: pageflow_dev
+      POSTGRES_USER: pageflow_user
+      POSTGRES_PASSWORD: pageflow_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - pageflow-network
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: pageflow-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - pageflow-network
+
+  # LocalStack for AWS services simulation
+  localstack:
+    image: localstack/localstack:latest
+    container_name: pageflow-localstack
+    environment:
+      - SERVICES=dynamodb,s3,sqs,sns,cognito-idp,lambda,apigateway,cloudwatch
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack_data:/tmp/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - pageflow-network
+
+  # User Service
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    container_name: pageflow-user-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - DYNAMODB_TABLE=pageflow-users
+      - COGNITO_USER_POOL_ID=us-east-1_testpool
+      - COGNITO_CLIENT_ID=testclient
+    ports:
+      - "3001:3001"
+    depends_on:
+      - localstack
+    networks:
+      - pageflow-network
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+
+  # Progress Service
+  progress-service:
+    build:
+      context: .
+      dockerfile: services/progress-service/Dockerfile
+    container_name: pageflow-progress-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - DYNAMODB_TABLE=pageflow-progress
+    ports:
+      - "3002:3002"
+    depends_on:
+      - localstack
+    networks:
+      - pageflow-network
+    volumes:
+      - ./services/progress-service:/app
+      - /app/node_modules
+
+  # Assessment Service
+  assessment-service:
+    build:
+      context: .
+      dockerfile: services/assessment/Dockerfile
+    container_name: pageflow-assessment-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - DYNAMODB_TABLE=pageflow-assessments
+    ports:
+      - "3003:3003"
+    depends_on:
+      - localstack
+    networks:
+      - pageflow-network
+    volumes:
+      - ./services/assessment:/app
+      - /app/node_modules
+
+  # Bedrock Service
+  bedrock-service:
+    build:
+      context: .
+      dockerfile: services/bedrock/Dockerfile
+    container_name: pageflow-bedrock-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - BEDROCK_MODEL_ID=anthropic.claude-3-sonnet-20240229-v1:0
+    ports:
+      - "3004:3004"
+    depends_on:
+      - localstack
+    networks:
+      - pageflow-network
+    volumes:
+      - ./services/bedrock:/app
+      - /app/node_modules
+
+  # Page Companion Service
+  page-companion-service:
+    build:
+      context: .
+      dockerfile: services/page-companion/Dockerfile
+    container_name: pageflow-page-companion-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3005
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    ports:
+      - "3005:3005"
+    depends_on:
+      - localstack
+    networks:
+      - pageflow-network
+    volumes:
+      - ./services/page-companion:/app
+      - /app/node_modules
+
+  # Device Sync Service
+  device-sync-service:
+    build:
+      context: .
+      dockerfile: services/device-sync/Dockerfile
+    container_name: pageflow-device-sync-service
+    environment:
+      - NODE_ENV=development
+      - PORT=3006
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3006:3006"
+    depends_on:
+      - localstack
+      - redis
+    networks:
+      - pageflow-network
+    volumes:
+      - ./services/device-sync:/app
+      - /app/node_modules
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: pageflow-api-gateway
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - USER_SERVICE_URL=http://user-service:3001
+      - PROGRESS_SERVICE_URL=http://progress-service:3002
+      - ASSESSMENT_SERVICE_URL=http://assessment-service:3003
+      - BEDROCK_SERVICE_URL=http://bedrock-service:3004
+      - PAGE_COMPANION_SERVICE_URL=http://page-companion-service:3005
+      - DEVICE_SYNC_SERVICE_URL=http://device-sync-service:3006
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user-service
+      - progress-service
+      - assessment-service
+      - bedrock-service
+      - page-companion-service
+      - device-sync-service
+    networks:
+      - pageflow-network
+    volumes:
+      - ./services/api-gateway:/app
+      - /app/node_modules
+
+  # Web Application
+  web-app:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: pageflow-web-app
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+      - NEXT_PUBLIC_AMPLIFY_REGION=us-east-1
+    ports:
+      - "3007:3000"
+    depends_on:
+      - api-gateway
+    networks:
+      - pageflow-network
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+
+  # Development tools
+  dev-tools:
+    image: node:18-alpine
+    container_name: pageflow-dev-tools
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "npm install && npm run build:all"
+    networks:
+      - pageflow-network
+
+  # Testing environment
+  test-runner:
+    image: node:18-alpine
+    container_name: pageflow-test-runner
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "npm install && npm test"
+    depends_on:
+      - postgres
+      - redis
+      - localstack
+    networks:
+      - pageflow-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  localstack_data:
+
+networks:
+  pageflow-network:
+    driver: bridge 

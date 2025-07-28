@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "UI Verification Check",
+  "description": "Prompts for manual verification of UI changes after code modifications to ensure frontend properly reflects backend changes",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.css",
+      "**/*.scss",
+      "**/*.html"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Changes have been detected in the codebase that might affect the UI. Please verify the following:\n\n1. Are the UI changes displaying correctly in the frontend?\n2. Is the data from the backend being properly reflected in the UI?\n3. Are there any visual inconsistencies or bugs introduced by these changes?\n4. Have you tested the UI across different screen sizes/devices?\n\nPlease manually check these aspects before proceeding."
+  }
+}
