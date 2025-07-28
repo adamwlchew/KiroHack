@@ -1,18 +1,37 @@
 import { UserProfileService } from '../../services/userProfileService';
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-import { S3Client } from '@aws-sdk/client-s3';
 import { AppError } from '@pageflow/utils';
 import { User, UserRole } from '@pageflow/types';
 
 // Mock AWS SDK
-jest.mock('@aws-sdk/lib-dynamodb');
-jest.mock('@aws-sdk/client-s3');
-jest.mock('@aws-sdk/s3-request-presigner');
+const mockDynamoSend = jest.fn();
+const mockS3Send = jest.fn();
+
+jest.mock('@aws-sdk/lib-dynamodb', () => ({
+  DynamoDBDocumentClient: {
+    from: jest.fn().mockReturnValue({
+      send: mockDynamoSend,
+    }),
+  },
+  GetCommand: jest.fn(),
+  PutCommand: jest.fn(),
+  UpdateCommand: jest.fn(),
+  DeleteCommand: jest.fn(),
+}));
+
+jest.mock('@aws-sdk/client-s3', () => ({
+  S3Client: jest.fn().mockImplementation(() => ({
+    send: mockS3Send,
+  })),
+  PutObjectCommand: jest.fn(),
+  DeleteObjectCommand: jest.fn(),
+}));
+
+jest.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: jest.fn().mockResolvedValue('https://signed-url.com'),
+}));
 
 describe('UserProfileService', () => {
   let userProfileService: UserProfileService;
-  let mockDynamoClient: jest.Mocked<DynamoDBDocumentClient>;
-  let mockS3Client: jest.Mocked<S3Client>;
 
   const mockUser: User = {
     id: 'test-user-id',
@@ -56,33 +75,25 @@ describe('UserProfileService', () => {
     process.env.S3_PROFILE_PICTURES_BUCKET = 'test-profile-pictures-bucket';
     process.env.AWS_REGION = 'us-east-1';
 
-    mockDynamoClient = {
-      send: jest.fn(),
-    } as any;
-
-    mockS3Client = {
-      send: jest.fn(),
-    } as any;
-
     userProfileService = new UserProfileService();
-    (userProfileService as any).dynamoClient = mockDynamoClient;
-    (userProfileService as any).s3Client = mockS3Client;
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    mockDynamoSend.mockClear();
+    mockS3Send.mockClear();
   });
 
   describe('getUserProfile', () => {
     it('should successfully retrieve user profile', async () => {
-      mockDynamoClient.send.mockResolvedValue({
+      mockDynamoSend.mockResolvedValue({
         Item: mockUser,
       });
 
       const result = await userProfileService.getUserProfile('test-user-id');
 
       expect(result).toEqual(mockUser);
-      expect(mockDynamoClient.send).toHaveBeenCalledWith(
+      expect(mockDynamoSend).toHaveBeenCalledWith(
         expect.objectContaining({
           input: expect.objectContaining({
             TableName: 'test-users-table',
@@ -93,7 +104,7 @@ describe('UserProfileService', () => {
     });
 
     it('should return null when user not found', async () => {
-      mockDynamoClient.send.mockResolvedValue({});
+      mockDynamoSend.mockResolvedValue({});
 
       const result = await userProfileService.getUserProfile('non-existent-user');
 
@@ -101,7 +112,7 @@ describe('UserProfileService', () => {
     });
 
     it('should handle DynamoDB errors', async () => {
-      mockDynamoClient.send.mockRejectedValue(new Error('DynamoDB error'));
+      mockDynamoSend.mockRejectedValue(new Error('DynamoDB error'));
 
       await expect(userProfileService.getUserProfile('test-user-id')).rejects.toThrow(AppError);
     });
@@ -109,14 +120,14 @@ describe('UserProfileService', () => {
 
   describe('createUserProfile', () => {
     it('should successfully create user profile', async () => {
-      mockDynamoClient.send.mockResolvedValue({});
+      mockDynamoSend.mockResolvedValue({});
 
       const result = await userProfileService.createUserProfile(mockUser);
 
       expect(result).toMatchObject(mockUser);
       expect(result.createdAt).toBeDefined();
       expect(result.updatedAt).toBeDefined();
-      expect(mockDynamoClient.send).toHaveBeenCalledWith(
+      expect(mockDynamoSend).toHaveBeenCalledWith(
         expect.objectContaining({
           input: expect.objectContaining({
             TableName: 'test-users-table',
@@ -130,7 +141,7 @@ describe('UserProfileService', () => {
     it('should handle profile already exists error', async () => {
       const error = new Error('ConditionalCheckFailedException');
       error.name = 'ConditionalCheckFailedException';
-      mockDynamoClient.send.mockRejectedValue(error);
+      mockDynamoSend.mockRejectedValue(error);
 
       await expect(userProfileService.createUserProfile(mockUser)).rejects.toThrow(
         expect.objectContaining({
@@ -152,14 +163,14 @@ describe('UserProfileService', () => {
       };
 
       const updatedUser = { ...mockUser, ...updates };
-      mockDynamoClient.send.mockResolvedValue({
+      mockDynamoSend.mockResolvedValue({
         Attributes: updatedUser,
       });
 
       const result = await userProfileService.updateUserProfile('test-user-id', updates);
 
       expect(result).toEqual(updatedUser);
-      expect(mockDynamoClient.send).toHaveBeenCalledWith(
+      expect(mockDynamoSend).toHaveBeenCalledWith(
         expect.objectContaining({
           input: expect.objectContaining({
             TableName: 'test-users-table',
@@ -174,7 +185,7 @@ describe('UserProfileService', () => {
     it('should handle user not found error', async () => {
       const error = new Error('ConditionalCheckFailedException');
       error.name = 'ConditionalCheckFailedException';
-      mockDynamoClient.send.mockRejectedValue(error);
+      mockDynamoSend.mockRejectedValue(error);
 
       await expect(
         userProfileService.updateUserProfile('non-existent-user', { displayName: 'New Name' })

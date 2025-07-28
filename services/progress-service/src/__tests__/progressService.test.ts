@@ -1,4 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { ProgressService } from '../services/progressService';
 import { ProgressRepository } from '../repositories/progressRepository';
 import { MilestoneRepository } from '../repositories/milestoneRepository';
@@ -14,15 +15,17 @@ jest.mock('../repositories/achievementRepository');
 describe('ProgressService', () => {
   let progressService: ProgressService;
   let mockDynamoDbClient: jest.Mocked<DynamoDBClient>;
+  let mockDocumentClient: jest.Mocked<DynamoDBDocumentClient>;
   let mockProgressRepository: jest.Mocked<ProgressRepository>;
   let mockMilestoneRepository: jest.Mocked<MilestoneRepository>;
   let mockAchievementRepository: jest.Mocked<AchievementRepository>;
 
   beforeEach(() => {
     mockDynamoDbClient = {} as jest.Mocked<DynamoDBClient>;
+    mockDocumentClient = {} as jest.Mocked<DynamoDBDocumentClient>;
     mockProgressRepository = new ProgressRepository(mockDynamoDbClient, 'test-table') as jest.Mocked<ProgressRepository>;
-    mockMilestoneRepository = new MilestoneRepository(mockDynamoDbClient, 'test-table') as jest.Mocked<MilestoneRepository>;
-    mockAchievementRepository = new AchievementRepository(mockDynamoDbClient, 'test-table') as jest.Mocked<AchievementRepository>;
+    mockMilestoneRepository = new MilestoneRepository('test-table', mockDocumentClient) as jest.Mocked<MilestoneRepository>;
+    mockAchievementRepository = new AchievementRepository('test-table', mockDocumentClient) as jest.Mocked<AchievementRepository>;
     
     progressService = new ProgressService(mockDynamoDbClient);
     

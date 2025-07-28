@@ -40,7 +40,7 @@ describe('ProgressReportingService', () => {
     }],
     overallCompletion: 50,
     startedAt: new Date(),
-    lastAccessedAt: new Date().toISOString(),
+    lastAccessedAt: new Date(),
     deviceSyncStatus: {
       lastSyncedAt: new Date(),
       syncedDevices: ['device1'],

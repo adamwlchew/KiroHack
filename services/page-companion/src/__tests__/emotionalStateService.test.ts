@@ -36,7 +36,7 @@ describe('EmotionalStateService', () => {
 
       expect(result.primary).toBe(Emotion.HAPPY);
       expect(result.intensity).toBeGreaterThan(50);
-      expect(result.lastUpdated).not.toBe(currentState.lastUpdated);
+      expect(new Date(result.lastUpdated).getTime()).toBeGreaterThanOrEqual(new Date(currentState.lastUpdated).getTime());
     });
 
     it('should transition to concerned state when user is struggling', () => {

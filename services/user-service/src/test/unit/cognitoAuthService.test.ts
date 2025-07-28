@@ -3,11 +3,25 @@ import { CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-
 import { AppError } from '@pageflow/utils';
 
 // Mock AWS SDK
-jest.mock('@aws-sdk/client-cognito-identity-provider');
+const mockSend = jest.fn();
+jest.mock('@aws-sdk/client-cognito-identity-provider', () => ({
+  CognitoIdentityProviderClient: jest.fn().mockImplementation(() => ({
+    send: mockSend,
+  })),
+  SignUpCommand: jest.fn(),
+  ConfirmSignUpCommand: jest.fn(),
+  InitiateAuthCommand: jest.fn(),
+  ForgotPasswordCommand: jest.fn(),
+  ConfirmForgotPasswordCommand: jest.fn(),
+  GetUserCommand: jest.fn(),
+  AssociateSoftwareTokenCommand: jest.fn(),
+  VerifySoftwareTokenCommand: jest.fn(),
+  SetUserMFAPreferenceCommand: jest.fn(),
+  RespondToAuthChallengeCommand: jest.fn(),
+}));
 
 describe('CognitoAuthService', () => {
   let cognitoAuthService: CognitoAuthService;
-  let mockClient: jest.Mocked<CognitoIdentityProviderClient>;
 
   beforeEach(() => {
     // Set required environment variables
@@ -15,12 +29,12 @@ describe('CognitoAuthService', () => {
     process.env.COGNITO_CLIENT_ID = 'test-client-id';
     process.env.AWS_REGION = 'us-east-1';
 
-    mockClient = new CognitoIdentityProviderClient({}) as jest.Mocked<CognitoIdentityProviderClient>;
     cognitoAuthService = new CognitoAuthService();
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    mockSend.mockClear();
   });
 
   describe('register', () => {
@@ -33,7 +47,7 @@ describe('CognitoAuthService', () => {
         },
       };
 
-      mockClient.send = jest.fn().mockResolvedValue(mockResponse);
+      mockSend.mockResolvedValue(mockResponse);
 
       const registerRequest = {
         email: 'test@example.com',
@@ -55,7 +69,7 @@ describe('CognitoAuthService', () => {
         message: 'User already exists',
       };
 
-      mockClient.send = jest.fn().mockRejectedValue(mockError);
+      mockSend.mockRejectedValue(mockError);
 
       const registerRequest = {
         email: 'test@example.com',
@@ -86,7 +100,7 @@ describe('CognitoAuthService', () => {
         ],
       };
 
-      mockClient.send = jest.fn()
+      mockSend
         .mockResolvedValueOnce(mockAuthResponse)
         .mockResolvedValueOnce(mockUserResponse);
 
@@ -113,7 +127,7 @@ describe('CognitoAuthService', () => {
         },
       };
 
-      mockClient.send = jest.fn().mockResolvedValue(mockAuthResponse);
+      mockSend.mockResolvedValue(mockAuthResponse);
 
       const signInRequest = {
         email: 'test@example.com',
@@ -133,7 +147,7 @@ describe('CognitoAuthService', () => {
         },
       };
 
-      mockClient.send = jest.fn().mockResolvedValue(mockResponse);
+      mockSend.mockResolvedValue(mockResponse);
 
       const resetRequest = {
         email: 'test@example.com',
@@ -158,7 +172,7 @@ describe('CognitoAuthService', () => {
       ];
 
       for (const testCase of testCases) {
-        mockClient.send = jest.fn().mockRejectedValue(testCase.error);
+        mockSend.mockRejectedValue(testCase.error);
 
         const signInRequest = {
           email: 'test@example.com',
